@@ -328,7 +328,7 @@ a `~/Mail/` directory.
 
 ## Useful Commands
 
-**Displaying and Modifying Text Files**
+### Displaying and Modifying Text Files
 
 The `cat` *file* command (intented to concatenate files to the
 standard ouput device) reads a file and displays its contents on
@@ -348,7 +348,7 @@ $ echo "Kali rules!" > kali-rules.txt
 $ echo "Kali is the best" >> kali-rules.txt
 ```
 
-**Searching for Files within Files**
+### Searching for Files within Files
 
 The `find` *directory* *criteria* command searches for files in
 the hierarchy under *directory* according to several criteria. The
@@ -367,7 +367,7 @@ Adding the `-r` option enables a recursive search on all files
 contained in the directory. This allows you to look for a file
 when you only know a part of its contents.
 
-**Managing Processes**
+### Managing Processes
 
 The `ps aux` command lists the processes currently running and
 helps to identify them by showing their PID. Once you know the PID
@@ -389,7 +389,7 @@ resume controls of the command line. The process can then be
 restarted in the background with `bg %`*job-number* (for 
 background).
 
-**Managing Rights**
+### Managing Rights
 
 Linux is a multi-user system so its necessary to provide a
 permissions system to control the set of authorized operations
@@ -463,9 +463,178 @@ could delete other users' files in /tmp/.
 3 commands control the permissions associated with a file:
 * `chown` *user file* changes the owner of the file
   * Frequently, you want to change the group of a file at the same
-  time that you change the owner. The `chown` command has a special
+    time that you change the owner. The `chown` command has a special
   syntax for that: `chown`*user:group file*
 * `chgrp` *group file* alters the owner group
 * `chmod` *rights file* changes the permissions for the file
 
-There are two ways
+There are two ways of representing rights. Among them, the
+symbolic representation is probably the easiest to understand
+and remember. It involves the letter symbols mentioned above.
+You can define rights for each category of users (`u/g/o`), by
+setting them explicitly (with =), by adding (+), or subtracting
+(-). Thus, the `u=rxw,g+rw,o-r` formula gives the owner read, write,
+and execute rights, adds read and write rights for the owner group,
+and removes read rights for other users. Rights not altered by
+the addition or subtraction in such a command remain unmodified.
+The letter `a`, for all, covers all 3 categories of users, so
+that `a=rx` grants all 3 categories the same rights (read and
+execute, but not write).
+
+The (octal) numeric representation associates each right with
+a value: `4` for read, `2` for write, and `1` for execute. We
+associate each combination of rights with the sum of the 3
+figures, and a value is assigned to each category of users,
+in the usual order (owner, group, others).
+
+For instance, the `chmod 754` *file* command will set the
+following rights: read, write, and execute for the owner
+(since 7 = 4 + 2 + 1); read and execute for the group
+(since 5 = 4 + 1); read-only for others. The `0` means
+no rights; thus `chmod 600` *file* allows for read and
+write permissions for the owner, and no rights for anyone
+else. **The most frequent combinations are `755` for
+executable files and directories, and `644` for data files.
+
+To represent special rights, you can prefix a 4th digit
+to this number according to the same principle, where the
+`setuid`, `setgid`, and `sticky` bits are 4, 2, and 1,
+respectively. The command `chmod 4754` will associate
+the `setuid` bit with the previously described rights.
+
+Note that the use of octal notation only allows you
+to set all the rights at once on a file; you cannot
+use it to add a new right, such as read access for the
+group owner, since you must take into account the existing
+rights and compute the new corresponding numerical value.
+
+The octal representation is also used with the `umask`
+commmand, which is used to restrict permissions on
+newly created files. When an application creates a file,
+it assigns indicative permissions, knowing that the
+system automatically removes the rights defined with
+`umask`. Enter `umask` in a shell; you will see a mask
+such as `0022`. This is simply an octal representation
+of the rights to be systematically removed (in this case,
+the write rights for the group and other users).
+
+If you give it a new octal value, the `umask` command
+modifies the mask. Used in a shell initialization file
+(for example, `~./bash_profile`), it will effectively
+change the default mask for your work sessions.
+
+**Recursive operation**
+
+Sometimes we have to change rights for an entire file tree.
+All the commands above have a `-R` option to operate
+recursively in sub-directories.
+
+The distinction between directories and files sometimes
+causes problems with recursive operations. That is why
+the "X" letter has been introduced in the symbolic
+representation of rights. It represents a right to
+execute which applies only to directories (and not to
+files lacking this right). Thus, `chmod -R a+X` *directory*
+willl only add execute rights for all categories of users
+(a) for all of sub-directories and files for which
+at least one category of use (even if their sole owner)
+already has execute rights.
+
+### Getting system information and logs
+
+The `free` command displays information on memory;
+*disk free* (`df`) reports on the available disk
+space on each of the disks mounted in the file
+system. Its `-h` option (for *human readable*)
+converts the sizes into a more legible unit
+(usually mebibytes or gibibytes). In a similar
+fashion, `free` command supports the `-m` and `-g`
+options, and displays its data either in mebibytes
+or in gibibytes, respectively.
+
+The `id` command displays the identity of the user
+running the session along with the list of groups
+they belong to. Since the access to some files or devices
+may be limited to group members, checking available
+group membership may be useful.
+
+The `uname -a` command returns a single line
+documenting the kernel name (Linux), the hostname,
+the kernel release, the kernel version, the machine
+type (an architecture string such as x86_64), and the
+name of the operating system (GNU/Linux). The output
+of this command should usually be includd in bug reports
+as it clearly defines the kernel in use and the hardware
+platform you are running on.
+
+All these commands provide run-time information,
+but often you need to consult logs to understand what
+happened on your computer. In particular, the kernel
+emits messages that it stores in a ring buffer whenever
+something interesting happens (such as a new USB device
+being inserted, a failing hard disk operation, or initial
+hardware detection on boot). You can retrieve the kernel
+logs with the `dmesg` command.
+
+Systemd's journal also stores multiple logs (stdout/stderr
+output of daemons, syslog messages, kernel logs) and makes
+it easy to query them with `journalctl`. Without any
+arguments, it just dumps all the available logs in a
+chronological way. With the `-r` option, it will reverse
+the order so the newer messages are shown first. With
+the `-f` option, it will continously print new log entries
+as they are appended to its database. The `-u` option can
+limit the messages to those emitted by a specific systemd
+unit (ex: `journalctrl -u ssh.service`).
+
+### Discovering the hardware
+
+The kernel exports many details abot detected hardware
+through the `/proc/` and `/sys/` virtual filesystems.
+Several tools summarize those details. Among them,
+`lspci` (in the *pciutils* package) lists PCI devices,
+`lsusb` (in the *usbutils* package) lists USB devices,
+and `lspcmcia` (in the *pcmciautils* package) lists
+PCMCIA cards. These tools are very useful for identifying
+the exact model of a device. The identification also allows
+more precise searches on the web, which in turn, lead to
+more relevant documents. Note that the *pciutils* and
+*usbutils* packages are already installed on the base
+Kali system but *pcmciautils* must be installed with
+`apt install pcmciautils`.
+
+These programs have a `-v` option that lists more
+detailed (but usually unnecessary) information. Finally,
+the `lsdev` command (in the *procinfo* package) lists
+communication resources used by devices.
+
+The `lshw` program is a combination of the above
+programs and displays a long description of the hardware
+discovered in a hierarchical manner. You should
+attah its full output to any report about hardware
+support problems.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
