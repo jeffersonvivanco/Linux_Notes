@@ -11,7 +11,7 @@ system. The kernel provides a common base to all other programs
 on the system and typically runs in *ring zero*, also known as
 *kernel space*.
 
-**The User Space**
+### The User Space
 
 We use the term *user* to lump together everything that happens
 outside of the kernel. Among the programs running in user space
@@ -22,7 +22,7 @@ them in scripts to automate many tasks.
 **Let's quickly review the various tasks handled by the Linux
 Kernel**
 
-1. Driving Hardware
+#### 1. Driving Hardware
   
 The kernel is tasked, first and foremost, with controlling the
 computer's hardware components. It detects and configures them
@@ -66,7 +66,7 @@ whereas mouse, keyboard, and serial ports use character devices. In
 both cases, the programming interface includes device-specific
 commands that can be invoked through the `ioctl` system call.
 
-2. Unifying File Systems
+#### 2. Unifying File Systems
 
 File systems are a prominent aspect of the kernel. Unix-like
 systems merge all the file stores in a single hierarchy, which
@@ -106,7 +106,7 @@ Commands such as `mkfs.ext3` (where `mkfs` stands for
 *MaKe FileSystem*) handle formatting. These commands require, as a
 parameter, a device file representing the partition to be formatted
 (for instance, `/dev/sda1`, the first partition on the first 
-drive). This operation is destructive and should be rnu only once,
+drive). This operation is destructive and should be run only once,
 unless you want to wipe a filesystem and start fresh.
 
 There are also network filesystems such as NFS, which do not store
@@ -116,7 +116,7 @@ Thanks to the file system abstraction, you don't have to worry
 about how this disk is connected, since the files remain accessible
 in their usual hierarchical way.
 
-3. Managing Processes
+#### 3. Managing Processes
 
 A process is a running instance of a program, which requires
 memory to store both the program itself and its operating data.
@@ -124,7 +124,7 @@ The kernel is in charge of creating and tracking processes. When a
 program runs, the kernel first sets aside some memory, loads the
 executable code from the file system into it, and then starts the
 code running. It keeps information about this process, the most
-visible of whih is an identification number known as the *process
+visible of which is an identification number known as the *process
 identifier* (PID).
 
 Like most modern operating systems, those with Unix-like kernels,
@@ -132,7 +132,7 @@ including Linux, are capable of multi-tasking. In other words, they
 allow the system to run many processes at the same time. There is
 actually only one running process at any one time, but the kernel
 divides CPU time into small slices and runs each process in turn.
-Since these time slices very short (in the millisecond range),
+Since these time slices are very short (in the millisecond range),
 they create the appearance of processes running in parallel,
 although they are active only during their time interval and idle
 the rest of the time. The kernel's job is to adjust its scheduling
@@ -160,20 +160,20 @@ The kernel allows several independent instances of the same program
 to run, but each is allowed access only to its own time slices and
 memory. Their data thus remains independent.
 
-4. Rights Management
+#### 4. Rights Management
 
 Unix-like systems support multiple users and groups and allow
 control of permissions. Most of the time, a process is identified
 by the user who started it. That process is only permitted to
 take actions permitted for its owner. For instance, opening a file
-requires the kernl to check the process identity against access
+requires the kernel to check the process identity against access
 permissions.
 
 ## How to get a command line
 
 In the event that your graphical interface is broken, you can still
 get a command line on virtual consoles (up to six of them can be
-accessible through the siz key combinations of CTRL+ALT+F1 through
+accessible through the six key combinations of CTRL+ALT+F1 through
 CTRL+ALT+F6 -- the CTRL key can be omitted if you are already in
 text mode, outside of Xorg or Wayland's graphical interface). You
 get a very basic login screen where you enter your login and
