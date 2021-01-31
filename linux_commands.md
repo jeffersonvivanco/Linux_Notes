@@ -94,7 +94,66 @@ a built-in command, do `man zshbuiltins`
 * `tee` - pipe fitting, copies standard input to standard output, making a copy in
   0 or more files. ex: `ls /home/user | tee my_directories.txt`
 * `ln`, `link` - make links. The `ln` utility creates a new directory entry (linked file) which has the
-  same modes as the original file.
+  same modes as the original file. It is useful for maintaining multiple copies of a file in many
+  places at once without using up storage for the copies, instead, a link points to the original copy.
+  There are 2 types of links; hard links and symbolic links. How the link points to a file is one
+  of the differences between a hard and symbolic link. 
+  
+  By default, `ln` makes hard links. A hard link to a file is indistinguishable from the original
+  directory entry; any changes to a file are effectively independent of the name used to reference
+  the file. Hard links may not normally refer to directories and may not span file systems. 
+
+  A symbolic link contains the name of the file to which it is linked. The referenced file is
+  used when an `open` operation is performed on the link. A `stat` on a symbolic link will
+  return the linked-to file; an `lstat` must be done to obtain information about the link.
+  The `readlink` call may be used to read the contents of a symbolic link. Symbolic links may
+  span file systems and may refer to directories.
+
+  Underneath the file system, files are represented as inodes. A file in the file system
+  is basically a link to an inode. A hard link, then, just creates another file with a link
+  to the same underlying inode. When you delete a file, it removes one link to the underlying
+  inode. The inode is only deleted (or deletable/overwritable) when all links to the inode
+  have been deleted. A symbolic link is a link to another name in the file system. Once a hard link
+  has been made, the link is to the inode. Deleting, renaming, or moving the original file will
+  not affect the hard link as it links to the underlying inode. Any changes to the data on the
+  inode is reflected in all files that refer to that inode.
+
+  Hard links are useful when the original file is getting moved around. Hard links may take
+  less disk space as they only take up a directory entry; whereas a symlink needs its own inode
+  to store the name it points to. Hard links also take less time to resolve--symlinks can point
+  to other symlinks that are in symlinked directories. Ans some of these could be on NFS or
+  other high-latency file systems, and so could result in network traffic to resolve. Hard
+  links, being always on the same file system, are always resolved in a single look-up, and
+  never involve network latency (if it's a hard link on an NFS filesystem, the NFS server would
+  do the resolution, and it would be invisible to the client system).
+
+  Possibly `open` use the same functionality as hard links to keep a file's inode active
+  so that even if the file gets unlinked, the inode remains to allow the process continued
+  access, and only once the process closes does the file really go away. This allows for
+  much safer temporary files (if you can get the `open` and `unlink` to happen automatically,
+  which there may be a POSIX API for that, then you really have a safe temporary file) where
+  you can read/write your data without anyone being able to access it. Well, that was true
+  before /proc gave everyone the ability to look at your file descriptors.
+
+  * soft link - more of a shortcut to the original file. If you delete the original file,
+    the shortcut fails and if you delete the shortcut nothing happens to the original
+    * proof - `readlink link` or `ls -l link`, the output will have the first letter in
+      `lrwxrwxrwx` as `l` which is indication that the file is a soft link
+    * deleting - `unlink link`
+    * if you wish your soft link to work even after moving it somewhere else from the
+      current directory, make sure you give it the absolute path and not the relative
+      path while creating a soft link (starting from /root/user/Target_file)
+  * hard link - is more of a mirror copy or multiple paths to the same file. Whatever
+    you do on file1 appears on file2. You delete file1, file2 still exists.
+    * proof - `ls -i link Target_file` (check their inodes)
+    * delete - delete like a normal file
+    * you know immediately where a symbolic link points to while with hard links, you
+      need to explore the whole file system to find files sharing the same inode.
+      `find / -inum 517333`
+    * a hard link cannot be created across filesystems. both files must be on the same
+      filesystems, because different filesystems have different independent inode tables
+      (2 files on different filesystems, but with the same inode number would be different).
+
 
 ### Symbols
 * `>` - used to send information somewhere, ex: `echo hello world > file1.txt`
